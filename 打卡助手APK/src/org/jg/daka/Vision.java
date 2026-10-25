@@ -74,13 +74,28 @@ public class Vision {
     }
 
     // ---------- 四个判别器 ----------
-    /** 验证码弹窗在不在（白框上的白点） */
+    /** 验证码弹窗在不在：白框白点 + 上方三个蓝圈（结果卡也是白的，但没有蓝圈） */
     public static boolean dialogPresent(Shot s) {
         int[] ys = {500, 620, 740, 860, 980, 1030};
         int[] xs = {90, 630};
         int hits = 0;
         for (int by : ys) for (int bx : xs) if (isWhite(s.at(s.X(bx), s.Y(by)))) hits++;
-        return hits >= 10;
+        if (hits < 10) return false;
+        int blueRings = 0;
+        for (int i = 0; i < 3; i++) if (ringBlue(s, RING_X[i])) blueRings++;
+        return blueRings >= 2;
+    }
+
+    /** 圆圈本身是不是蓝的（不是数字） */
+    private static boolean ringBlue(Shot s, int cx) {
+        int[][] offs = {{-22, 0}, {22, 0}, {0, -22}, {0, 22}, {-16, -16}, {16, 16}};
+        int n = 0;
+        for (int[] o : offs) {
+            int c = s.at(s.X(cx + o[0]), s.Y(RING_Y + o[1]));
+            int r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255;
+            if (b > 150 && (b - r) > 60 && g > 80 && g < 190) n++;
+        }
+        return n >= 3;
     }
 
     /** 成功弹窗的红「确认」按钮在不在 */
@@ -113,6 +128,7 @@ public class Vision {
     public static int[] chevron(Shot s) {
         int n = 0;
         long sx = 0, sy = 0;
+        int minX = Integer.MAX_VALUE, maxX = -1, minY = Integer.MAX_VALUE, maxY = -1;
         for (int by = 952; by <= 1046; by += 2) {
             for (int bx = 62; bx <= 128; bx += 2) {
                 int X = s.X(bx), Y = s.Y(by);
@@ -120,10 +136,21 @@ public class Vision {
                     n++;
                     sx += X;
                     sy += Y;
+                    if (X < minX) minX = X;
+                    if (X > maxX) maxX = X;
+                    if (Y < minY) minY = Y;
+                    if (Y > maxY) maxY = Y;
                 }
             }
         }
-        if (n < 12) return null;
+        if (n < 25) return null;
+        // 必须是「一坨」而不是散落一片：真机实测「‹」宽约 19px、高约 35px；
+        // 打卡页那片区域会有下拉框边框/文字，散开成 64px 宽，用它排除
+        int unit = s.X(40) - s.X(0);           // 40 个基准像素对应的实际像素
+        int bw = maxX - minX, bh = maxY - minY;
+        if (bw * 40 > unit * 34) return null;   // 太宽，不像一个箭头
+        if (bh * 40 < unit * 18) return null;   // 太扁
+        if (bh * 40 > unit * 80) return null;   // 太高，是别的东西
         return new int[]{(int) (sx / n), (int) (sy / n), n};
     }
 
