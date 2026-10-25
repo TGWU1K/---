@@ -33,6 +33,7 @@ public class Runner implements Runnable {
 
     private int rounds = 0, missStreak = 0, failStreak = 0, idleStreak = 0, notInApp = 0, mineTicks = 0;
     private int mockLaunches = 0;
+    private int diagSaves = 0;
     private int maxRounds = 40;
 
     private Runner(Context c) { app = c; }
@@ -191,6 +192,7 @@ public class Runner implements Runnable {
                 sleep(400);
                 return "miss";
             }
+            if (ch == null && !dlg) Fx.log(app, "认不出页面，诊断 " + Vision.diag(s));
             bm.recycle();
             if (dlg) return "idle";           // 弹窗还在，交给下一轮
             return "idle";
@@ -202,9 +204,26 @@ public class Runner implements Runnable {
         bm.recycle();
         tapPx(tx, ty);
 
-        if (!waitDialog(4000)) {
-            Fx.log(app, "等不到验证码弹窗");
-            return "timeout";
+        if (!waitDialog(3000)) {
+            // 第一下可能被动画/遮罩吃掉，再点一次（此时若弹窗已开，点在遮罩上不会误事）
+            Fx.log(app, "第一次点完没看到弹窗，再点一次");
+            Bitmap again = shoot();
+            if (again != null) {
+                Vision.Shot s2 = new Vision.Shot(again);
+                int dy2 = Vision.findDakaY(s2);
+                if (dy2 >= 0) {
+                    int tx2 = s2.X(360), ty2 = s2.Y(dy2 + 25);
+                    again.recycle();
+                    tapPx(tx2, ty2);
+                } else {
+                    again.recycle();
+                }
+            }
+            if (!waitDialog(3000)) {
+                Fx.log(app, "等不到验证码弹窗");
+                diagShot("等不到弹窗_轮" + rounds);
+                return "timeout";
+            }
         }
         return handleCaptcha();
     }
@@ -424,6 +443,27 @@ public class Runner implements Runnable {
         DakaService svc = DakaService.I;
         if (svc == null) return;
         svc.tap(x, y);
+    }
+
+    /** 出问题的时候把"它看到的画面"存到相册，最多 3 张，方便用户直接发回来 */
+    private void diagShot(String tag) {
+        if (diagSaves >= 3) return;
+        Bitmap db = shoot();
+        if (db == null) {
+            Fx.log(app, "诊断：抓不到画面");
+            return;
+        }
+        try {
+            Vision.Shot ds = new Vision.Shot(db);
+            Fx.log(app, "诊断 " + Vision.diag(ds));
+            String p = Fx.savePng(app, db, tag);
+            Fx.log(app, "已存诊断图：" + p);
+            diagSaves++;
+        } catch (Throwable t) {
+            Fx.log(app, "诊断图出错：" + t);
+        } finally {
+            try { db.recycle(); } catch (Throwable t) { }
+        }
     }
 
     private int jit() { return rnd.nextInt(7) - 3; }

@@ -76,14 +76,36 @@ public class Vision {
     // ---------- 四个判别器 ----------
     /** 验证码弹窗在不在：白框白点 + 上方三个蓝圈（结果卡也是白的，但没有蓝圈） */
     public static boolean dialogPresent(Shot s) {
-        int[] ys = {500, 620, 740, 860, 980, 1030};
-        int[] xs = {90, 630};
-        int hits = 0;
-        for (int by : ys) for (int bx : xs) if (isWhite(s.at(s.X(bx), s.Y(by)))) hits++;
+        int hits = dialogHits(s);
         if (hits < 10) return false;
-        int blueRings = 0;
-        for (int i = 0; i < 3; i++) if (ringBlue(s, RING_X[i])) blueRings++;
-        return blueRings >= 2;
+        return ringsAnywhere(s) >= 2;
+    }
+
+    /** 三个蓝圈成立几个（允许整页上下偏 ±90 像素，适配状态栏占位不同的手机） */
+    private static int ringsAnywhere(Shot s) {
+        int best = 0;
+        for (int d = -90; d <= 90; d += 3) {
+            int n = 0;
+            for (int i = 0; i < 3; i++) if (ringBlueAt(s, RING_X[i], d)) n++;
+            if (n > best) best = n;
+            if (best >= 3) break;
+        }
+        return best;
+    }
+
+    private static boolean ringBlueAt(Shot s, int cx, int dOff) {
+        int[][] offs = {{-22, 0}, {22, 0}, {0, -22}, {0, 22}, {-16, -16}, {16, 16}};
+        int n = 0;
+        for (int[] o : offs) {
+            int x = s.X(cx + o[0]);
+            int y = (int) Math.round((RING_Y + o[1]) * s.s) + dOff;
+            if (y < 0) y = 0;
+            if (y >= s.h) y = s.h - 1;
+            int c = s.at(x, y);
+            int r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255;
+            if (b > 150 && (b - r) > 60 && g > 80 && g < 190) n++;
+        }
+        return n >= 3;
     }
 
     /** 圆圈本身是不是蓝的（不是数字） */
@@ -96,6 +118,34 @@ public class Vision {
             if (b > 150 && (b - r) > 60 && g > 80 && g < 190) n++;
         }
         return n >= 3;
+    }
+
+    // ---------- 诊断（不改判据，只为了让日志说人话） ----------
+    public static int dialogHits(Shot s) {
+        int[] ys = {500, 620, 740, 860, 980, 1030};
+        int[] xs = {90, 630};
+        int hits = 0;
+        for (int by : ys) for (int bx : xs) if (isWhite(s.at(s.X(bx), s.Y(by)))) hits++;
+        return hits;
+    }
+
+    public static int blueRings(Shot s) {
+        int n = 0;
+        for (int i = 0; i < 3; i++) if (ringBlue(s, RING_X[i])) n++;
+        return n;
+    }
+
+    public static int meanLum(Shot s) {
+        long sum = 0;
+        int n = 0;
+        for (int y = 0; y < s.h; y += 16) for (int x = 0; x < s.w; x += 16) { sum += s.lum(x, y); n++; }
+        return n == 0 ? 0 : (int) (sum / n);
+    }
+
+    public static String diag(Shot s) {
+        return "尺寸 " + s.w + "x" + s.h + " 均亮 " + meanLum(s)
+                + " 白点 " + dialogHits(s) + " 蓝圈 " + blueRings(s)
+                + " 打卡Y " + findDakaY(s);
     }
 
     /** 成功弹窗的红「确认」按钮在不在 */

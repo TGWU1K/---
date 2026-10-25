@@ -3,6 +3,7 @@ package org.jg.daka;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -40,7 +41,7 @@ public class MainActivity extends Activity {
         root.setPadding(16 * dp, 16 * dp, 16 * dp, 16 * dp);
 
         TextView title = new TextView(this);
-        title.setText("集港打卡助手  v1.6");
+        title.setText("集港打卡助手  v1.7");
         title.setTextSize(20);
         root.addView(title);
 
@@ -162,6 +163,10 @@ public class MainActivity extends Activity {
         opts.addView(cbFloaty);
         root.addView(opts);
 
+        root.addView(btn("抓一屏（5 秒后）· 看它到底看见了什么", new View.OnClickListener() {
+            public void onClick(View v) { grabNow(); }
+        }), lp(dp));
+
         LinearLayout logRow = new LinearLayout(this);
         logRow.setOrientation(LinearLayout.HORIZONTAL);
         logRow.addView(btn("导出日志", new View.OnClickListener() {
@@ -208,6 +213,37 @@ public class MainActivity extends Activity {
     protected void onDestroy() {
         if (cur == this) cur = null;
         super.onDestroy();
+    }
+
+    // ---------------- 抓一屏（诊断） ----------------
+    private void grabNow() {
+        Toast.makeText(this, "5 秒后抓屏：现在切到要看的那一页，别动屏幕", Toast.LENGTH_LONG).show();
+        Fx.log(this, "抓屏：5 秒倒计时，现在切到要看的那一页");
+        ui.postDelayed(new Runnable() {
+            public void run() {
+                if (DakaService.I == null) {
+                    Fx.log(MainActivity.this, "抓屏失败：无障碍没连上");
+                    return;
+                }
+                Bitmap b = DakaService.I.capture(3000);
+                if (b == null) {
+                    Fx.log(MainActivity.this, "抓屏失败：拿不到画面（无障碍+投屏都试过了）");
+                    return;
+                }
+                try {
+                    Vision.Shot s = new Vision.Shot(b);
+                    Fx.log(MainActivity.this, "抓屏 " + Vision.diag(s));
+                    String p = Fx.savePng(MainActivity.this, b, "手动抓屏");
+                    Fx.log(MainActivity.this, "已存相册：" + p);
+                    Toast.makeText(MainActivity.this, p, Toast.LENGTH_LONG).show();
+                } catch (Throwable t) {
+                    Fx.log(MainActivity.this, "抓屏出错：" + t);
+                } finally {
+                    try { b.recycle(); } catch (Throwable t) { }
+                }
+                showLog();
+            }
+        }, 5000);
     }
 
     // ---------------- 自检 ----------------
