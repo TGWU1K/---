@@ -74,6 +74,9 @@ public class ProbeService extends AccessibilityService {
         return "?";
     }
 
+    /** 最近一次 shot() 的失败原因（成功时为空串），给报告用 */
+    public static volatile String lastWhy = "";
+
     /** 无障碍截图（API 30+）。失败/黑帧都会体现在返回值里 */
     public Bitmap shot(int timeoutMs) {
         if (Build.VERSION.SDK_INT < 30) return null;
@@ -106,6 +109,7 @@ public class ProbeService extends AccessibilityService {
             why.set("截图异常 " + t);
         }
         Bitmap b = out.get();
+        lastWhy = (b == null ? why.get() : "");
         if (b == null) Logx.add("shot() -> null " + why.get());
         return b;
     }

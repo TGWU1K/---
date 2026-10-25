@@ -338,6 +338,7 @@ public class MainActivity extends Activity {
 
                     if (a != null) a.recycle();
                     if (b != null) b.recycle();
+                    grabDone = true;
                     finishReport("打卡页抓取完成");
                 } catch (Throwable t) {
                     Logx.add("抓屏出错 " + t);
@@ -383,7 +384,7 @@ public class MainActivity extends Activity {
     // ---------------- 收尾 ----------------
 
     void finishReport(String why) {
-        final String text = Probe.report();
+        final String text = withTail(Probe.report());
         runOnUiThread(new Runnable() {
             @Override public void run() {
                 Probe.copy(MainActivity.this, text);
@@ -397,7 +398,7 @@ public class MainActivity extends Activity {
     }
 
     void copyReport() {
-        String text = Probe.report();
+        String text = withTail(Probe.report());
         if (text.length() == 0) {
             Toast.makeText(this, "还没有报告，先点②", Toast.LENGTH_SHORT).show();
             return;
@@ -408,4 +409,11 @@ public class MainActivity extends Activity {
     }
 
     private boolean busy = false;
+    private boolean grabDone = false;
+
+    private String withTail(String text) {
+        return text + "\n\n【第④步】打卡页抓图："
+                + (grabDone ? "已抓 2 张，存进相册（Pictures/集港体检），请把两张图一起发回"
+                            : "未执行 —— 这份报告里没有打卡页画面，请先点「④ 抓打卡页画面」再复制");
+    }
 }

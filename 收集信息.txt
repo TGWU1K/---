@@ -1,0 +1,22 @@
+【集港体检】型号 vivo V2230A / Android 13 (API 33)
+逻辑屏幕 720x1470 @352dpi
+物理屏幕 720x1600（和逻辑值不一样，点坐标要按物理值算！）
+ABI arm64-v8a
+芯片 mt6833
+无障碍服务 已连接 ✔
+前台是 org.jg.probe
+模拟点击 成功 ✔（靶子变绿）
+
+
+第1张：720x1600 亮度200 正常 耗时73ms
+第2张：拿不到（2ms）
+第3张：拿不到（3ms）
+结论：无障碍截图可用（1/3 非黑），平均 26ms
+界面结构：窗口数 5
+· 窗口0 类型=系统 包=com.vivo.upslide 节点=1 有字=0 字数=0 深0 关键类=FrameLayout
+· 窗口1 类型=系统 包=com.vivo.upslide 节点=1 有字=0 字数=0 深0 关键类=FrameLayout
+· 窗口2 类型=系统 包=com.android.systemui 节点=5 有字=0 字数=0 深2 关键类=FrameLayout,FrameLayout,ImageView,ImageView,ImageView
+· 窗口3 类型=系统 包=com.android.systemui 节点=19 有字=1 字数=5 深4 关键类=FrameLayout,FrameLayout,TextView,ImageView,ImageView,ImageView
+权限 悬浮窗 没有 / 通知 没有 / 电池白名单 没有
+微信 没装或读不到版本
+投屏 可用 ✔ 帧数=2485 两帧差异79%（帧会更新 ✔）

@@ -65,16 +65,25 @@ public class Probe {
         if (Build.VERSION.SDK_INT < 30) return "Android " + Build.VERSION.SDK_INT + "：没有无障碍截图接口（需 API30+）";
         StringBuilder sb = new StringBuilder();
         long sum = 0;
-        int ok = 0;
+        int ok = 0, limited = 0, done = 0;
         for (int i = 1; i <= 3; i++) {
+            // Android 12+ 两次 takeScreenshot 至少隔 1 秒，否则立刻返回限速错误
+            if (i > 1) {
+                try { Thread.sleep(1200); } catch (InterruptedException e) { }
+            }
             long t0 = System.currentTimeMillis();
             Bitmap b = svc.shot(3000);
             long ms = System.currentTimeMillis() - t0;
-            sum += ms;
             if (b == null) {
-                sb.append("\n第").append(i).append("张：拿不到（").append(ms).append("ms）");
+                boolean fast = ms < 60;          // 秒失败基本就是限速
+                if (fast) limited++;
+                sb.append("\n第").append(i).append("张：拿不到（").append(ms).append("ms）")
+                        .append(fast ? " ← 系统限速（两次截图需隔 1 秒以上），不代表不能用"
+                                : " ← 原因：" + ProbeService.lastWhy);
                 continue;
             }
+            done++;
+            sum += ms;
             int lum = meanLum(b);
             boolean black = lum < 12;
             if (!black) ok++;
@@ -84,7 +93,8 @@ public class Probe {
             b.recycle();
         }
         sb.append("\n结论：无障碍截图").append(ok > 0 ? "可用（" + ok + "/3 非黑）" : "不可用（3/3 全黑或拿不到）");
-        sb.append("，平均 ").append(sum / 3).append("ms");
+        if (limited > 0) sb.append("；其中 ").append(limited).append(" 张是限速失败（隔 1.2 秒后仍失败才算问题）");
+        sb.append("，成功时平均 ").append(done > 0 ? sum / done : 0).append("ms");
         return sb.toString();
     }
 
@@ -193,11 +203,16 @@ public class Probe {
     }
 
     public static String wechat(Context c) {
+        android.content.pm.PackageManager pm = c.getPackageManager();
         try {
-            android.content.pm.PackageInfo pi = c.getPackageManager().getPackageInfo("com.tencent.mm", 0);
-            return "微信 已装 v" + pi.versionName;
+            android.content.pm.PackageInfo pi = pm.getPackageInfo("com.tencent.mm", 0);
+            return "微信 已装 v" + pi.versionName + "（" + pi.versionCode + "）";
         } catch (Throwable t) {
-            return "微信 没装或读不到版本";
+            try {
+                // Android 11+ 包可见性限制时，用启动意图探测（仍读不到版本号）
+                if (pm.getLaunchIntentForPackage("com.tencent.mm") != null) return "微信 已装（版本号被系统权限挡住）";
+            } catch (Throwable t2) { }
+            return "微信 读不到（这台手机可能真没装微信，也可能是包可见性限制）";
         }
     }
 
