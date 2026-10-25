@@ -40,7 +40,7 @@ public class MainActivity extends Activity {
         root.setPadding(16 * dp, 16 * dp, 16 * dp, 16 * dp);
 
         TextView title = new TextView(this);
-        title.setText("集港打卡助手  v1.3");
+        title.setText("集港打卡助手  v1.4");
         title.setTextSize(20);
         root.addView(title);
 
@@ -82,6 +82,7 @@ public class MainActivity extends Activity {
         int wantW = Math.min(bw * 2, slot);
         int wantH = bh * 2;
         for (int i = 0; i < 3; i++) {
+            pb[i].setTextSize(20);                      // 字也放大：14 -> 20sp
             LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(wantW, wantH);
             p.rightMargin = margin;
             perms.addView(pb[i], p);
