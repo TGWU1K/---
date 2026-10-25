@@ -48,8 +48,8 @@ public class Floaty {
                     tv = new TextView(c);
                     tv.setText(lastText);
                     tv.setTextColor(Color.WHITE);
-                    tv.setTextSize(12);
-                    tv.setPadding(20, 10, 20, 10);
+                    tv.setTextSize(24);                     // 悬浮球字号 12 -> 24sp（放大 2 倍）
+                    tv.setPadding(40, 20, 40, 20);           // 内边距同步放大，球体跟着变大
                     tv.setBackground(bg(lastColor));
                     lp = new WindowManager.LayoutParams(
                             WindowManager.LayoutParams.WRAP_CONTENT,
