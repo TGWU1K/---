@@ -13,14 +13,14 @@
 | 安装包 | 用途 | 大小 |
 |---|---|---|
 | [`apk/jigang-probe-v1.1.apk`](apk/jigang-probe-v1.1.apk) | **集港体检**：装到目标手机上，量出这台手机能不能无障碍截图 / 投屏 / 手势点击，报告写到剪贴板 | 29 KB |
-| [`apk/jigang-daka-v1.2.apk`](apk/jigang-daka-v1.2.apk) | **集港打卡助手**：自动点打卡、自动过验证码，抢到就停手响铃（⚠️ 尚未跑过完整真机轮次） | 37 KB |
+| [`apk/jigang-daka-v1.3.apk`](apk/jigang-daka-v1.3.apk) | **集港打卡助手**：自动点打卡、自动过验证码，抢到就停手响铃（⚠️ 尚未跑过完整真机轮次） | 37 KB |
 
 司机操作说明：`apk/下载说明.txt`（体检）、`apk/打卡助手怎么用.txt`（正式版）。
 
 直链格式（把 `用户名` 换成实际 GitHub 用户名）：
 
 ```
-https://github.com/用户名/jigang-daka-helper/raw/main/apk/jigang-daka-v1.2.apk
+https://github.com/用户名/jigang-daka-helper/raw/main/apk/jigang-daka-v1.3.apk
 ```
 
 微信里发这个链接是可以的（微信拦的是 `.apk` 文件本身，不拦链接）。但对方在微信里点开通常下载不了，需要点右上角 `…` → **在浏览器打开**。

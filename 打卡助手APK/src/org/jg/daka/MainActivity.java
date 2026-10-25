@@ -40,7 +40,7 @@ public class MainActivity extends Activity {
         root.setPadding(16 * dp, 16 * dp, 16 * dp, 16 * dp);
 
         TextView title = new TextView(this);
-        title.setText("集港打卡助手  v1.0");
+        title.setText("集港打卡助手  v1.3");
         title.setTextSize(20);
         root.addView(title);
 
@@ -56,17 +56,36 @@ public class MainActivity extends Activity {
 
         LinearLayout perms = new LinearLayout(this);
         perms.setOrientation(LinearLayout.HORIZONTAL);
-        perms.addView(btn("无障碍", new View.OnClickListener() {
+        Button[] pb = new Button[3];
+        pb[0] = btn("无障碍", new View.OnClickListener() {
             public void onClick(View v) { open(Settings.ACTION_ACCESSIBILITY_SETTINGS); }
-        }), lp(dp));
-        perms.addView(btn("悬浮窗", new View.OnClickListener() {
+        });
+        pb[1] = btn("悬浮窗", new View.OnClickListener() {
             public void onClick(View v) {
                 openPkg(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
             }
-        }), lp(dp));
-        perms.addView(btn("电池", new View.OnClickListener() {
+        });
+        pb[2] = btn("电池", new View.OnClickListener() {
             public void onClick(View v) { openBattery(); }
-        }), lp(dp));
+        });
+        // 三个按钮放大到原来 2 倍；一排放不下就按屏宽均分后缩窄（高度不变）
+        int bw = 0, bh = 0;
+        for (Button tb : pb) {
+            tb.measure(android.view.View.MeasureSpec.makeMeasureSpec(0, android.view.View.MeasureSpec.UNSPECIFIED),
+                       android.view.View.MeasureSpec.makeMeasureSpec(0, android.view.View.MeasureSpec.UNSPECIFIED));
+            bw = Math.max(bw, tb.getMeasuredWidth());
+            bh = Math.max(bh, tb.getMeasuredHeight());
+        }
+        int margin = 6 * dp;
+        int avail = getResources().getDisplayMetrics().widthPixels - 32 * dp;   // 扣掉 root 左右 padding
+        int slot = (avail - margin * 3) / 3;
+        int wantW = Math.min(bw * 2, slot);
+        int wantH = bh * 2;
+        for (int i = 0; i < 3; i++) {
+            LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(wantW, wantH);
+            p.rightMargin = margin;
+            perms.addView(pb[i], p);
+        }
         root.addView(perms);
 
         btnRun = btn("开始抢单", new View.OnClickListener() {
