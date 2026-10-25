@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">集港体检</string>
+    <string name="a11y_desc">用于收集本机的截图、界面读取、点击能力信息，全部结果只写到屏幕和剪切板。</string>
+</resources>

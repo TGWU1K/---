@@ -1,0 +1,12 @@
+{
+  "name": "集港打卡助手",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "packageName": "org.jg.daka.helper",
+  "main": "main.js",
+  "icon": "res/logo.png",
+  "launchConfig": {
+    "hideLogs": true,
+    "displaySplash": false
+  }
+}

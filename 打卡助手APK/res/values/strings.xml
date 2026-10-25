@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">集港打卡助手</string>
+    <string name="a11y_desc">用于读取屏幕上的验证码并按顺序点击。只在你自己按下「开始抢单」时工作，永不点击「确认」。</string>
+</resources>

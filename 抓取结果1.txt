@@ -1,0 +1,197 @@
+=== 集港节点树报告 v2 #1 ===
+时间 10-24 18:56:24
+机型 某安卓手机 / Android 14 (API 34)
+屏幕(逻辑) 1080x2184 密度 480 / 屏幕(物理) 1080x2412
+前台 com.tencent.mm / com.tencent.mm.plugin.appbrand.ui.AppBrandUI00
+
+【活动窗口】pkg=com.tencent.mm 节点=3
+  [FrameLayout] 0,0,1080,2412
+    [?] 0,0,0,0 [不可见]
+    [View] #android:id/navigationBarBackground 0,2298,1080,2412 [不可见]
+
+【全部窗口】共 6 个
+
+W1 系统(type=3) pkg=gesture 框=1035,114,1080,2412 节点≥1（非应用窗口，不展开）
+
+W2 系统(type=3) pkg=gesture 框=0,114,45,2412 节点≥1（非应用窗口，不展开）
+
+W3 系统(type=3) pkg=com.android.systemui 框=0,2298,1080,2412 节点≥3（非应用窗口，不展开）
+
+W4 系统(type=3) pkg=com.android.systemui 框=0,0,1080,114 节点≥4（非应用窗口，不展开）
+
+W5 系统(type=3) pkg=org.autojs.autojs6 框=976,705,1222,1227 节点≥3（非应用窗口，不展开）
+
+W6 应用(type=1) pkg=com.tencent.mm 框=0,0,1080,2412 节点=3
+  [FrameLayout] 0,0,1080,2412
+    [?] 0,0,0,0 [不可见]
+    [View] #android:id/navigationBarBackground 0,2298,1080,2412 [不可见]
+
+【统计】节点 6 / 有文字 0 / 纯数字文本 0 / 可点 0 / 最大深度 2
+WebView 节点 0 / Canvas 类节点 0
+类名 FrameLayout(2) ?(2) View(2)
+没有纯数字文本节点
+
+=== 集港节点树报告 v2 #1 ===
+时间 10-24 18:56:24
+机型 某安卓手机 / Android 14 (API 34)
+屏幕(逻辑) 1080x2184 密度 480 / 屏幕(物理) 1080x2412
+前台 com.tencent.mm / com.tencent.mm.plugin.appbrand.ui.AppBrandUI00
+
+【活动窗口】pkg=com.tencent.mm 节点=3
+  [FrameLayout] 0,0,1080,2412
+    [?] 0,0,0,0 [不可见]
+    [View] #android:id/navigationBarBackground 0,2298,1080,2412 [不可见]
+
+【全部窗口】共 6 个
+
+W1 系统(type=3) pkg=gesture 框=1035,114,1080,2412 节点≥1（非应用窗口，不展开）
+
+W2 系统(type=3) pkg=gesture 框=0,114,45,2412 节点≥1（非应用窗口，不展开）
+
+W3 系统(type=3) pkg=com.android.systemui 框=0,2298,1080,2412 节点≥3（非应用窗口，不展开）
+
+W4 系统(type=3) pkg=com.android.systemui 框=0,0,1080,114 节点≥4（非应用窗口，不展开）
+
+W5 系统(type=3) pkg=org.autojs.autojs6 框=976,705,1222,1227 节点≥3（非应用窗口，不展开）
+
+W6 应用(type=1) pkg=com.tencent.mm 框=0,0,1080,2412 节点=3
+  [FrameLayout] 0,0,1080,2412
+    [?] 0,0,0,0 [不可见]
+    [View] #android:id/navigationBarBackground 0,2298,1080,2412 [不可见]
+
+【统计】节点 6 / 有文字 0 / 纯数字文本 0 / 可点 0 / 最大深度 2
+WebView 节点 0 / Canvas 类节点 0
+类名 FrameLayout(2) ?(2) View(2)
+没有纯数字文本节点
+
+=== 集港节点树报告 v2 #2 ===
+时间 10-24 18:56:43
+机型 某安卓手机 / Android 14 (API 34)
+屏幕(逻辑) 1080x2184 密度 480 / 屏幕(物理) 1080x2412
+前台 com.tencent.mm / com.tencent.mm.plugin.appbrand.ui.AppBrandUI00
+
+【活动窗口】pkg=com.tencent.mm 节点=3
+  [FrameLayout] 0,0,1080,2412
+    [?] 0,0,0,0 [不可见]
+    [View] #android:id/navigationBarBackground 0,2298,1080,2412 [不可见]
+
+【全部窗口】共 6 个
+
+W1 系统(type=3) pkg=gesture 框=1035,114,1080,2412 节点≥1（非应用窗口，不展开）
+
+W2 系统(type=3) pkg=gesture 框=0,114,45,2412 节点≥1（非应用窗口，不展开）
+
+W3 系统(type=3) pkg=com.android.systemui 框=0,2298,1080,2412 节点≥3（非应用窗口，不展开）
+
+W4 系统(type=3) pkg=com.android.systemui 框=0,0,1080,114 节点≥4（非应用窗口，不展开）
+
+W5 系统(type=3) pkg=org.autojs.autojs6 框=976,705,1222,1227 节点≥3（非应用窗口，不展开）
+
+W6 应用(type=1) pkg=com.tencent.mm 框=0,0,1080,2412 节点=3
+  [FrameLayout] 0,0,1080,2412
+    [?] 0,0,0,0 [不可见]
+    [View] #android:id/navigationBarBackground 0,2298,1080,2412 [不可见]
+
+【统计】节点 6 / 有文字 0 / 纯数字文本 0 / 可点 0 / 最大深度 2
+WebView 节点 0 / Canvas 类节点 0
+类名 FrameLayout(2) ?(2) View(2)
+没有纯数字文本节点
+
+=== 集港节点树报告 v2 #1 ===
+时间 10-24 18:56:24
+机型 某安卓手机 / Android 14 (API 34)
+屏幕(逻辑) 1080x2184 密度 480 / 屏幕(物理) 1080x2412
+前台 com.tencent.mm / com.tencent.mm.plugin.appbrand.ui.AppBrandUI00
+
+【活动窗口】pkg=com.tencent.mm 节点=3
+  [FrameLayout] 0,0,1080,2412
+    [?] 0,0,0,0 [不可见]
+    [View] #android:id/navigationBarBackground 0,2298,1080,2412 [不可见]
+
+【全部窗口】共 6 个
+
+W1 系统(type=3) pkg=gesture 框=1035,114,1080,2412 节点≥1（非应用窗口，不展开）
+
+W2 系统(type=3) pkg=gesture 框=0,114,45,2412 节点≥1（非应用窗口，不展开）
+
+W3 系统(type=3) pkg=com.android.systemui 框=0,2298,1080,2412 节点≥3（非应用窗口，不展开）
+
+W4 系统(type=3) pkg=com.android.systemui 框=0,0,1080,114 节点≥4（非应用窗口，不展开）
+
+W5 系统(type=3) pkg=org.autojs.autojs6 框=976,705,1222,1227 节点≥3（非应用窗口，不展开）
+
+W6 应用(type=1) pkg=com.tencent.mm 框=0,0,1080,2412 节点=3
+  [FrameLayout] 0,0,1080,2412
+    [?] 0,0,0,0 [不可见]
+    [View] #android:id/navigationBarBackground 0,2298,1080,2412 [不可见]
+
+【统计】节点 6 / 有文字 0 / 纯数字文本 0 / 可点 0 / 最大深度 2
+WebView 节点 0 / Canvas 类节点 0
+类名 FrameLayout(2) ?(2) View(2)
+没有纯数字文本节点
+
+=== 集港节点树报告 v2 #2 ===
+时间 10-24 18:56:43
+机型 某安卓手机 / Android 14 (API 34)
+屏幕(逻辑) 1080x2184 密度 480 / 屏幕(物理) 1080x2412
+前台 com.tencent.mm / com.tencent.mm.plugin.appbrand.ui.AppBrandUI00
+
+【活动窗口】pkg=com.tencent.mm 节点=3
+  [FrameLayout] 0,0,1080,2412
+    [?] 0,0,0,0 [不可见]
+    [View] #android:id/navigationBarBackground 0,2298,1080,2412 [不可见]
+
+【全部窗口】共 6 个
+
+W1 系统(type=3) pkg=gesture 框=1035,114,1080,2412 节点≥1（非应用窗口，不展开）
+
+W2 系统(type=3) pkg=gesture 框=0,114,45,2412 节点≥1（非应用窗口，不展开）
+
+W3 系统(type=3) pkg=com.android.systemui 框=0,2298,1080,2412 节点≥3（非应用窗口，不展开）
+
+W4 系统(type=3) pkg=com.android.systemui 框=0,0,1080,114 节点≥4（非应用窗口，不展开）
+
+W5 系统(type=3) pkg=org.autojs.autojs6 框=976,705,1222,1227 节点≥3（非应用窗口，不展开）
+
+W6 应用(type=1) pkg=com.tencent.mm 框=0,0,1080,2412 节点=3
+  [FrameLayout] 0,0,1080,2412
+    [?] 0,0,0,0 [不可见]
+    [View] #android:id/navigationBarBackground 0,2298,1080,2412 [不可见]
+
+【统计】节点 6 / 有文字 0 / 纯数字文本 0 / 可点 0 / 最大深度 2
+WebView 节点 0 / Canvas 类节点 0
+类名 FrameLayout(2) ?(2) View(2)
+没有纯数字文本节点
+
+=== 集港节点树报告 v2 #3 ===
+时间 10-24 18:56:57
+机型 某安卓手机 / Android 14 (API 34)
+屏幕(逻辑) 1080x2184 密度 480 / 屏幕(物理) 1080x2412
+前台 com.google.android.apps.inputmethod.zhuyin / 
+
+【活动窗口】pkg=com.tencent.mm 节点=3
+  [FrameLayout] 0,0,1080,2412
+    [?] 0,0,0,0 [不可见]
+    [View] #android:id/navigationBarBackground 0,2298,1080,2412 [不可见]
+
+【全部窗口】共 6 个
+
+W1 系统(type=3) pkg=gesture 框=1035,114,1080,2412 节点≥1（非应用窗口，不展开）
+
+W2 系统(type=3) pkg=gesture 框=0,114,45,2412 节点≥1（非应用窗口，不展开）
+
+W3 系统(type=3) pkg=com.android.systemui 框=0,2298,1080,2412 节点≥3（非应用窗口，不展开）
+
+W4 系统(type=3) pkg=com.android.systemui 框=0,0,1080,114 节点≥4（非应用窗口，不展开）
+
+W5 系统(type=3) pkg=org.autojs.autojs6 框=976,705,1222,1227 节点≥3（非应用窗口，不展开）
+
+W6 应用(type=1) pkg=com.tencent.mm 框=0,0,1080,2412 节点=3
+  [FrameLayout] 0,0,1080,2412
+    [?] 0,0,0,0 [不可见]
+    [View] #android:id/navigationBarBackground 0,2298,1080,2412 [不可见]
+
+【统计】节点 6 / 有文字 0 / 纯数字文本 0 / 可点 0 / 最大深度 2
+WebView 节点 0 / Canvas 类节点 0
+类名 FrameLayout(2) ?(2) View(2)
+没有纯数字文本节点
