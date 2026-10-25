@@ -85,7 +85,7 @@ public class MainActivity extends Activity {
         final Typeface tfb = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD);
         final Handler h = new Handler(Looper.getMainLooper());
         final Random rnd;
-        final int winRound;
+        int winRound;
         final String logPath;
 
         int state = ST_DAKA;
@@ -122,8 +122,10 @@ public class MainActivity extends Activity {
         // ---------------------------------------------------------- 坐标换算
         float sx, sy;
         void updateScale() {
+            // 和抢单助手完全同一套换算：只按宽度等比缩放（helper 里就是 s = w/720）
+            // 这样在 1080x2412 这类非 720x1600 的机型上，助手的点击坐标和这里的画的重合
             sx = getWidth() / 720f;
-            sy = getHeight() / 1600f;
+            sy = sx;
         }
         float SX(float v) { return v * sx; }
         float SY(float v) { return v * sy; }
@@ -195,6 +197,13 @@ public class MainActivity extends Activity {
             float x = e.getX() / sx, y = e.getY() / sy;
             touchCount++;
             log("touch " + (int) x + "," + (int) y + " state=" + state);
+            // 顶部留一条「测试开关」：点一下在 永不中(0) / 第 2 轮中(2) 之间切换
+            if (y < 210 && x < 700 && state != ST_CAPTCHA && state != ST_LOADING) {
+                winRound = (winRound == 0) ? 2 : 0;
+                log("winRound -> " + winRound);
+                invalidate();
+                return true;
+            }
             switch (state) {
                 case ST_DAKA:
                     if (x >= DAKA_X0 && x <= DAKA_X1 && y >= DAKA_Y0 && y <= DAKA_Y1) {
@@ -466,7 +475,9 @@ public class MainActivity extends Activity {
                 case ST_SUCCESS: st = "抢到!"; break;
                 default: st = "已确认"; break;
             }
-            textLeft(c, "MOCK 轮" + round + " " + st + " win@" + winRound, 20, 186, 22, 0xFF9AA79A, false);
+            textLeft(c, "MOCK 轮" + round + " " + st + " win@" + winRound
+                    + (winRound == 0 ? "（点这里改成第2轮中奖）" : "（点这里改回永不中奖）"),
+                    20, 186, 22, 0xFF9AA79A, false);
         }
     }
 }

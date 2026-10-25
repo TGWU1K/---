@@ -3,6 +3,7 @@ package org.jg.daka;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
@@ -31,6 +32,7 @@ public class Runner implements Runnable {
     private final Random rnd = new Random();
 
     private int rounds = 0, missStreak = 0, failStreak = 0, idleStreak = 0, notInApp = 0, mineTicks = 0;
+    private int mockLaunches = 0;
     private int maxRounds = 40;
 
     private Runner(Context c) { app = c; }
@@ -98,6 +100,22 @@ public class Runner implements Runnable {
                     if (mineTicks == 1 || mineTicks % 10 == 0) {
                         setState("等待切到微信…", Floaty.COL_WARN);
                         Fx.log(app, "前台是自己（" + pkg + "），等切到微信");
+                    }
+                    // 测试模式：自己把自己切走后，主动把「假打卡页」叫到前台，省得手动来回切
+                    if (Cfg.testAny(app) && mockLaunches >= 0 && mockLaunches < 3 && mineTicks % 4 == 2) {
+                        mockLaunches++;
+                        try {
+                            Intent mi = app.getPackageManager().getLaunchIntentForPackage("org.jg.mockdaka");
+                            if (mi != null) {
+                                mi.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                app.startActivity(mi);
+                                Fx.log(app, "测试模式：自动打开假打卡页");
+                            } else {
+                                mockLaunches = -1;   // 没装假打卡页，不再尝试
+                            }
+                        } catch (Throwable t) {
+                            mockLaunches = -1;
+                        }
                     }
                     sleep(1000);
                     continue;

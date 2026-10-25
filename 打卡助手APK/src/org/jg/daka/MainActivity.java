@@ -40,7 +40,7 @@ public class MainActivity extends Activity {
         root.setPadding(16 * dp, 16 * dp, 16 * dp, 16 * dp);
 
         TextView title = new TextView(this);
-        title.setText("集港打卡助手  v1.5");
+        title.setText("集港打卡助手  v1.6");
         title.setTextSize(20);
         root.addView(title);
 
