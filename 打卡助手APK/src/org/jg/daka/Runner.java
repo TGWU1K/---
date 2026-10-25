@@ -274,7 +274,9 @@ public class Runner implements Runnable {
             tapPx(cells[i][0], cells[i][1]);
             sleep(Cfg.TAP_GAP);
             if (i < 2) {
-                Bitmap b2 = shoot();
+                // 这里必须强制拿新画面：capture() 在 1.1 秒内会复用旧帧，
+                // 拿旧帧去判「圆圈变绿」必然误报「没变绿」。
+                Bitmap b2 = svcFresh();
                 if (b2 != null) {
                     Vision.Shot s2 = new Vision.Shot(b2);
                     boolean g = Vision.ringGreen(s2, i);
@@ -384,6 +386,13 @@ public class Runner implements Runnable {
      * 抓一张当前画面。无障碍通道优先；如果它一直返回空帧（部分机型/模拟器如此），
      * 就切到投屏通道，两边都试。
      */
+    /** 强制要一张新画面（不复用缓存帧），用于「点完该变绿了」这类自校验 */
+    private Bitmap svcFresh() {
+        DakaService svc = DakaService.I;
+        if (svc == null) return null;
+        return svc.captureFresh(2500);
+    }
+
     private Bitmap shoot() {
         DakaService svc = DakaService.I;
         if (svc == null) return null;

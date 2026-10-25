@@ -59,7 +59,17 @@ public class Projection {
                 @Override public void onStop() { stop(); }
             }, new Handler(c.getMainLooper()));
 
-            DisplayMetrics dm = c.getResources().getDisplayMetrics();
+            // 注意：必须用「真实屏幕尺寸」而不是 getDisplayMetrics()。
+            // 后者会扣掉导航栏（实测 720x1532），投屏出来的画面会被纵向压扁，
+            // 于是按 720x1600 算出来的点击坐标就全偏了。
+            DisplayMetrics dm = new DisplayMetrics();
+            try {
+                android.view.WindowManager wm = (android.view.WindowManager)
+                        c.getSystemService(Context.WINDOW_SERVICE);
+                wm.getDefaultDisplay().getRealMetrics(dm);
+            } catch (Throwable t) {
+                dm = c.getResources().getDisplayMetrics();
+            }
             W = dm.widthPixels; H = dm.heightPixels; DPI = dm.densityDpi;
 
             ht = new HandlerThread("proj");

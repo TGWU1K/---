@@ -12,15 +12,16 @@
 
 | 安装包 | 用途 | 大小 |
 |---|---|---|
+| [`apk/jigang-daka-v2.2.apk`](apk/jigang-daka-v2.2.apk) | **集港打卡助手**：自动点打卡、自动过验证码，抢到就停手响铃（已在官方 Android 13 模拟器上跑通完整轮次） | 41 KB |
+| [`apk/jigang-mock-v1.2.apk`](apk/jigang-mock-v1.2.apk) | **假打卡页**：没有真实打卡资格时，用它替代真页面做端到端测试（点顶部可切成「第 2 轮必中」） | 17 KB |
 | [`apk/jigang-probe-v1.1.apk`](apk/jigang-probe-v1.1.apk) | **集港体检**：装到目标手机上，量出这台手机能不能无障碍截图 / 投屏 / 手势点击，报告写到剪贴板 | 29 KB |
-| [`apk/jigang-daka-v1.3.apk`](apk/jigang-daka-v1.3.apk) | **集港打卡助手**：自动点打卡、自动过验证码，抢到就停手响铃（⚠️ 尚未跑过完整真机轮次） | 37 KB |
 
 司机操作说明：`apk/下载说明.txt`（体检）、`apk/打卡助手怎么用.txt`（正式版）。
 
 直链格式（把 `用户名` 换成实际 GitHub 用户名）：
 
 ```
-https://github.com/用户名/jigang-daka-helper/raw/main/apk/jigang-daka-v1.3.apk
+https://github.com/用户名/仓库名/raw/main/apk/jigang-daka-v2.2.apk
 ```
 
 微信里发这个链接是可以的（微信拦的是 `.apk` 文件本身，不拦链接）。但对方在微信里点开通常下载不了，需要点右上角 `…` → **在浏览器打开**。
@@ -79,10 +80,26 @@ bash 假打卡页/build_mock.sh
 - **真机（vivo V2230A / Android 13 / 720×1600）体检结论**：无障碍截图可用（单张 73ms，但系统限速 1 秒/次）、投屏可用且画面持续更新、`dispatchGesture` 能真的点中
 - **真机截图上的识别验证**：3/3 全对，最优距离 0.054 / 0.064 / 0.085，次优均 ≥0.253（阈值 0.18、边际 0.08 余量充足）
 - **真机界面坐标与 720×1600 基准逐项吻合**：弹窗白框 x72–647 / y465–1050、圆点 cx 249/359/469 cy 638、候选格列 181/359/538 行 863/976、打卡按钮 y1212–1308
+- **官方 AVD（Android 13，720×1600）上跑通完整闭环**：点打卡 → 认字 3/3（差异 0.003~0.071）→ 点三格 → 结果卡「‹」(93,1007) → 下一轮；抢到那轮打出 `*** 抢到单！已停手，绝不点「确认」 ***` 并自动存图，假打卡页日志里 **0 次 CONFIRM 触摸**
+- 红线自检生效：连续 20 轮没中会自己停（日志 `已停止 · 连续 20 轮没中`）
 
 **未实测**
-- 真机上「抢到」那张画面长什么样（仍按红色「确认」面积推断）
-- 完整真机轮次（点打卡 → 过验证码 → 结果卡 → 回到打卡页 → 抢到停手）
+- 真机上「抢到」那张画面长什么样（仍按红色「确认」面积推断；模拟器里用的是假打卡页画的成功窗）
+- 真实微信小程序上的完整轮次（只在假打卡页上跑通过）
+
+## 联调环境（官方 AVD）
+
+MuMu 被卸载后改成官方 Android Emulator，装好即用：
+
+```bash
+export ANDROID_SDK_ROOT=C:/tmp/ljq/sdk     # 必须正斜杠
+$ANDROID_SDK_ROOT/emulator/emulator.exe -avd daka33 \
+  -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
+```
+
+- AVD `daka33`：Android 13 / `hw.lcd 720x1600` / density 180 / 内存 2048 / `swiftshader_indirect`
+- 硬件加速靠 AEHD（`extras;google;Android_Emulator_Hypervisor_Driver`，需管理员权限装一次，`sc query aehd` 应为 RUNNING）
+- 两个坑：① adb 命令里出现 `/sdcard/...` 必须加 `MSYS2_ARG_CONV_EXCL='*'`，否则 Git Bash 会把它转成 Windows 路径；② **HARDWARE 位图必须先 `copy(ARGB_8888,false)` 再读像素**，`Canvas.drawBitmap` 画硬件位图会直接抛异常（这正是之前「无障碍截图拿不到帧、err=-9」的真凶）
 
 ## 安全红线（代码里是硬约束，不是建议）
 

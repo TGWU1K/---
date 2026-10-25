@@ -197,10 +197,11 @@ public class MainActivity extends Activity {
             float x = e.getX() / sx, y = e.getY() / sy;
             touchCount++;
             log("touch " + (int) x + "," + (int) y + " state=" + state);
-            // 顶部留一条「测试开关」：点一下在 永不中(0) / 第 2 轮中(2) 之间切换
+            // 顶部留一条「测试开关」：点一下在 永不中 / 从现在起第 2 轮中 之间切换。
+            // 注意这里不能写死 2——round 是一直累加的，写死 2 只在刚启动时有效。
             if (y < 210 && x < 700 && state != ST_CAPTCHA && state != ST_LOADING) {
-                winRound = (winRound == 0) ? 2 : 0;
-                log("winRound -> " + winRound);
+                winRound = (winRound == 0) ? (round + 2) : 0;
+                log("winRound -> " + winRound + " (当前 round=" + round + ")");
                 invalidate();
                 return true;
             }

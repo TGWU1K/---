@@ -24,9 +24,23 @@ public class DakaService extends AccessibilityService {
     public static volatile DakaService I;
     public volatile String fgPkg = null;
 
+    // 截图回调必须走自己的线程：如果回调投递到主线程，而调用方又在主线程里等 latch，
+    // 就会出现「谁也等不到谁」的死锁（表现是抓屏要等 40 秒然后失败）。
+    private static android.os.HandlerThread SHOT_TH = null;
+    private static android.os.Handler SHOT_H = null;
+
+    private static synchronized android.os.Handler shotHandler() {
+        if (SHOT_H == null) {
+            SHOT_TH = new android.os.HandlerThread("daka-shot");
+            SHOT_TH.start();
+            SHOT_H = new android.os.Handler(SHOT_TH.getLooper());
+        }
+        return SHOT_H;
+    }
+
     private final Executor EX = new Executor() {
         public void execute(Runnable r) {
-            new Handler(Looper.getMainLooper()).post(r);
+            shotHandler().post(r);
         }
     };
 
@@ -87,11 +101,25 @@ public class DakaService extends AccessibilityService {
     private static final int MIN_SHOT_GAP = 1100;
     private static volatile long lastShotAt = 0;
     private static Bitmap lastShot = null;
+    /** 最近一次截图失败的原始错误码（诊断用） */
+    public static volatile String lastShotErr = "";
 
     /** 截一张全屏；失败返回 null。太快会复用上一次的画面，避免被系统限速挡住 */
     public synchronized Bitmap capture(int timeoutMs) {
+        return captureInternal(timeoutMs, true);
+    }
+
+    /**
+     * 一定要新画面（例如「刚点完，圆圈该变绿了」这种自校验）。
+     * 会老老实实等够 1.1 秒的系统限速，绝不复用缓存帧。
+     */
+    public synchronized Bitmap captureFresh(int timeoutMs) {
+        return captureInternal(timeoutMs, false);
+    }
+
+    private Bitmap captureInternal(int timeoutMs, boolean allowCache) {
         if (Build.VERSION.SDK_INT < 30) return null;
-        if (lastShot != null && System.currentTimeMillis() - lastShotAt < MIN_SHOT_GAP) {
+        if (allowCache && lastShot != null && System.currentTimeMillis() - lastShotAt < MIN_SHOT_GAP) {
             try {
                 return lastShot.copy(Bitmap.Config.ARGB_8888, false);
             } catch (Throwable t) { }
@@ -112,6 +140,7 @@ public class DakaService extends AccessibilityService {
             Fx.log(this, "截图疑似空帧（均亮 " + m + "），重试 " + (attempt + 1));
             b.recycle();
         }
+        if (!lastShotErr.equals("")) Fx.log(this, "截图失败详情：" + lastShotErr);
         return null;
     }
 
@@ -142,11 +171,23 @@ public class DakaService extends AccessibilityService {
                             HardwareBuffer hb = r.getHardwareBuffer();
                             Bitmap hbm = Bitmap.wrapHardwareBuffer(hb, r.getColorSpace());
                             if (hbm != null) {
-                                // 直接把硬件位图 copy 成软件位图，在部分模拟器/驱动上会得到全 0，
-                                // 用 Canvas 画一遍强制做一次真正的读回，稳得多
-                                Bitmap soft = Bitmap.createBitmap(hbm.getWidth(), hbm.getHeight(),
-                                        Bitmap.Config.ARGB_8888);
-                                new Canvas(soft).drawBitmap(hbm, 0f, 0f, null);
+                                // 硬件位图必须 copy 成软件位图才能读像素。
+                                // 注意：Canvas.drawBitmap 画不了 HARDWARE 位图（会抛异常），
+                                // 所以先用 copy，copy 失败才退到 Canvas（对部分机型有效）。
+                                Bitmap soft = null;
+                                try {
+                                    soft = hbm.copy(Bitmap.Config.ARGB_8888, false);
+                                } catch (Throwable t) { soft = null; }
+                                if (soft == null) {
+                                    try {
+                                        soft = Bitmap.createBitmap(hbm.getWidth(), hbm.getHeight(),
+                                                Bitmap.Config.ARGB_8888);
+                                        new Canvas(soft).drawBitmap(hbm, 0f, 0f, null);
+                                    } catch (Throwable t) {
+                                        err[0] = -10;
+                                        soft = null;
+                                    }
+                                }
                                 out[0] = soft;
                                 hbm.recycle();
                             }
@@ -167,7 +208,8 @@ public class DakaService extends AccessibilityService {
             } catch (Throwable t) {
                 err[0] = -8;
             }
-            if (out[0] != null) return out[0];
+            if (out[0] != null) { lastShotErr = ""; return out[0]; }
+            lastShotErr = "err=" + err[0];
             if (err[0] == ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT) sleep(1150);
             else sleep(200);
         }
