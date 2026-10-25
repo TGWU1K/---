@@ -33,3 +33,6 @@ out/
 Thumbs.db
 desktop.ini
 .vscode/
+
+# ---- 说明书的中间产物（PDF 本身入库）----
+_pdf/*.html

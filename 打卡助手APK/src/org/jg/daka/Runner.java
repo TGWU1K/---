@@ -31,7 +31,7 @@ public class Runner implements Runnable {
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final Random rnd = new Random();
 
-    private int rounds = 0, missStreak = 0, failStreak = 0, idleStreak = 0, notInApp = 0, mineTicks = 0;
+    private int rounds = 0, missStreak = 0, failStreak = 0, idleStreak = 0, notInApp = 0, mineTicks = 0, idleWait = 0;
     private int mockLaunches = 0;
     private int diagSaves = 0;
     private int maxRounds = 40;
@@ -70,7 +70,7 @@ public class Runner implements Runnable {
     @Override
     public void run() {
         maxRounds = Cfg.rounds(app);
-        rounds = missStreak = failStreak = idleStreak = notInApp = 0;
+        rounds = missStreak = failStreak = idleStreak = notInApp = idleWait = 0;
         Fx.log(app, "=== 开始抢单：上限 " + maxRounds + " 轮，轮间隔 " + Cfg.gap(app) + "ms ===");
         setState("运行中");
         String stopReason = null;
@@ -85,11 +85,13 @@ public class Runner implements Runnable {
                 boolean mine = pkg != null && pkg.equals(app.getPackageName());
                 if (!mine && !Cfg.isAllowedPkg(app, pkg)) {
                     notInApp++;
+                    // 还没跑第一轮时，用户可能正在去打卡页的路上：给足时间，别刚开就停
+                    int limit = (rounds == 0) ? 300 : 20;
                     if (notInApp == 1 || notInApp % 5 == 0) {
-                        setState("不在微信（" + pkg + "）", Floaty.COL_WARN);
-                        Fx.log(app, "前台包名=" + pkg + "，等待切换到微信（" + notInApp + "/20）");
+                        setState(rounds == 0 ? "等你打开微信打卡页…" : ("不在微信（" + pkg + "）"), Floaty.COL_WARN);
+                        Fx.log(app, "前台包名=" + pkg + "，等待切换到微信（" + notInApp + "/" + limit + "）");
                     }
-                    if (notInApp > 20) { stopReason = "当前窗口不是微信：" + pkg; break; }
+                    if (notInApp > limit) { stopReason = "当前窗口不是微信：" + pkg; break; }
                     sleep(1000);
                     continue;
                 }
@@ -141,8 +143,16 @@ public class Runner implements Runnable {
                 }
 
                 if ("idle".equals(r)) {
-                    idleStreak++;
-                    if (idleStreak >= Cfg.IDLE_STREAK_MAX) { stopReason = "一直找不到「集港打卡」按钮"; break; }
+                    if (rounds == 0) {
+                        // 一轮都还没跑成：多半是打卡页还没打开，继续等，不算「一直找不到」
+                        idleStreak = 0;
+                        idleWait++;
+                        if (idleWait % 10 == 1) Fx.log(app, "还没看到「集港打卡」按钮，继续等（把打卡页打开就行）");
+                        if (idleWait > 120) { stopReason = "一直没看到打卡页"; break; }
+                    } else {
+                        idleStreak++;
+                        if (idleStreak >= Cfg.IDLE_STREAK_MAX) { stopReason = "一直找不到「集港打卡」按钮"; break; }
+                    }
                 } else {
                     idleStreak = 0;
                 }

@@ -75,7 +75,7 @@ public class MainActivity extends Activity {
         root.setPadding(16 * dp, 16 * dp, 16 * dp, 16 * dp);
 
         TextView title = new TextView(this);
-        title.setText("集港打卡助手  v2.3");
+        title.setText("集港打卡助手  v2.4");
         title.setTextSize(20);
         root.addView(title);
 
@@ -309,6 +309,12 @@ public class MainActivity extends Activity {
         }
         showLog();
         refresh();
+
+        // 打开 App 就把小球放出来：先开助手 → 再去开打卡页 → 最后点小球开始
+        if (Cfg.floaty(this) && Floaty.canShow(this) && DakaService.alive() && !Runner.isRunning()) {
+            Floaty.set("点我开始", Floaty.COL_IDLE);
+            Floaty.show(getApplicationContext());
+        }
     }
 
     @Override
@@ -424,7 +430,7 @@ public class MainActivity extends Activity {
                 + "    电池不限制 " + (bt ? "✔" : "✘");
         if (!a) txt += "\n\n⚠ 无障碍没开，脚本什么也做不了：点上面「无障碍」→ 找到「集港打卡助手」打开";
         tvCheck.setText(txt);
-        if (btnRun != null) btnRun.setText(Runner.isRunning() ? "停止" : "开始抢单");
+        if (btnRun != null) btnRun.setText(Runner.isRunning() ? "停止" : "开始抢单（也可以点小球）");
     }
 
     static void refreshIfVisible() {
@@ -491,7 +497,7 @@ public class MainActivity extends Activity {
         KeepAliveService.start(c);
         if (Cfg.floaty(c)) Floaty.show(c);
         Runner.start(c);
-        Toast.makeText(c, "已开始，切到微信的集港打卡页", Toast.LENGTH_SHORT).show();
+        Toast.makeText(c, "已开始：现在去打开微信的打卡页，助手会等你", Toast.LENGTH_SHORT).show();
         refreshIfVisible();
     }
 
