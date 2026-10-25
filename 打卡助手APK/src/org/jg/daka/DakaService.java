@@ -83,18 +83,34 @@ public class DakaService extends AccessibilityService {
         return dm.widthPixels / 720.0;
     }
 
-    /** 截一张全屏；失败返回 null（内部会处理「截图太快」重试，以及全黑帧重试） */
-    public Bitmap capture(int timeoutMs) {
+    /** Android 12+ 两次 takeScreenshot 至少隔 1 秒；真机实测第 2、3 张会秒失败 */
+    private static final int MIN_SHOT_GAP = 1100;
+    private static volatile long lastShotAt = 0;
+    private static Bitmap lastShot = null;
+
+    /** 截一张全屏；失败返回 null。太快会复用上一次的画面，避免被系统限速挡住 */
+    public synchronized Bitmap capture(int timeoutMs) {
         if (Build.VERSION.SDK_INT < 30) return null;
+        if (lastShot != null && System.currentTimeMillis() - lastShotAt < MIN_SHOT_GAP) {
+            try {
+                return lastShot.copy(Bitmap.Config.ARGB_8888, false);
+            } catch (Throwable t) { }
+        }
         for (int attempt = 0; attempt < 4; attempt++) {
+            long wait = MIN_SHOT_GAP - (System.currentTimeMillis() - lastShotAt);
+            if (lastShotAt > 0 && wait > 0) sleep((int) Math.min(wait + 60, 2000L));
             Bitmap b = captureRaw(timeoutMs);
-            if (b == null) { sleep(300); continue; }
+            if (b == null) { sleep(200); continue; }
+            lastShotAt = System.currentTimeMillis();
             int m = meanLum(b);
-            if (m >= 12) return b;
-            // 全黑/极暗：模拟器和部分机型会偶发返回空帧，收掉重来
+            if (m >= 12) {
+                if (lastShot != null) lastShot.recycle();
+                try { lastShot = b.copy(Bitmap.Config.ARGB_8888, false); } catch (Throwable t) { lastShot = null; }
+                return b;
+            }
+            // 全黑/极暗：极少数机型会偶发返回空帧，收掉重来
             Fx.log(this, "截图疑似空帧（均亮 " + m + "），重试 " + (attempt + 1));
             b.recycle();
-            sleep(350);
         }
         return null;
     }
@@ -152,7 +168,7 @@ public class DakaService extends AccessibilityService {
                 err[0] = -8;
             }
             if (out[0] != null) return out[0];
-            if (err[0] == ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT) sleep(450);
+            if (err[0] == ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT) sleep(1150);
             else sleep(200);
         }
         return null;
