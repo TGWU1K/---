@@ -18,6 +18,7 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,9 +27,42 @@ public class MainActivity extends Activity {
 
     static volatile MainActivity cur;
 
-    TextView tvState, tvCheck, tvLog;
+    TextView tvState, tvCheck, tvLog, tvSpeed;
     Button btnRun;
+    SeekBar sbSpeed;
     private final Handler ui = new Handler(Looper.getMainLooper());
+
+    // ---------------- 验证码点击速度 ----------------
+    private void pickSpeed(int ms) {
+        Cfg.setBudgetMs(this, ms);
+        int v = Cfg.budgetMs(this);
+        if (sbSpeed != null) sbSpeed.setProgress((v - Cfg.BUDGET_MIN) / 100);
+        showSpeed(v);
+        Toast.makeText(this, "点数字速度：" + (v / 1000.0) + " 秒（下一轮生效）", Toast.LENGTH_SHORT).show();
+    }
+
+    /** 把当前设置画出来：秒数 + 人味区间 + 颜色 */
+    private void showSpeed(int ms) {
+        String name;
+        if (ms < 800) name = "偏快，明显像脚本";
+        else if (ms < 1200) name = "很快，风险偏高";
+        else if (ms < 1500) name = "手很快的人";
+        else if (ms <= 3500) name = "和真人一致（推荐）";
+        else name = "比真人还从容";
+        if (tvSpeed != null) {
+            tvSpeed.setText("当前：" + (ms / 1000.0) + " 秒 · " + name);
+            tvSpeed.setTextSize(18);
+            tvSpeed.setTextColor(zoneColor(ms));
+        }
+    }
+
+    private int zoneColor(int ms) {
+        if (ms < 800) return 0xFFC62828;
+        if (ms < 1200) return 0xFFEF6C00;
+        if (ms < 1500) return 0xFFF9A825;
+        if (ms <= 3500) return 0xFF2E7D32;
+        return 0xFF1565C0;
+    }
 
     @Override
     protected void onCreate(Bundle b) {
@@ -41,7 +75,7 @@ public class MainActivity extends Activity {
         root.setPadding(16 * dp, 16 * dp, 16 * dp, 16 * dp);
 
         TextView title = new TextView(this);
-        title.setText("集港打卡助手  v2.2");
+        title.setText("集港打卡助手  v2.3");
         title.setTextSize(20);
         root.addView(title);
 
@@ -69,26 +103,97 @@ public class MainActivity extends Activity {
         pb[2] = btn("电池", new View.OnClickListener() {
             public void onClick(View v) { openBattery(); }
         });
-        // 三个按钮放大到原来 2 倍；一排放不下就按屏宽均分后缩窄（高度不变）
-        int bw = 0, bh = 0;
-        for (Button tb : pb) {
-            tb.measure(android.view.View.MeasureSpec.makeMeasureSpec(0, android.view.View.MeasureSpec.UNSPECIFIED),
-                       android.view.View.MeasureSpec.makeMeasureSpec(0, android.view.View.MeasureSpec.UNSPECIFIED));
-            bw = Math.max(bw, tb.getMeasuredWidth());
-            bh = Math.max(bh, tb.getMeasuredHeight());
-        }
-        int margin = 6 * dp;
+        // 统一的大按钮尺寸：按「无障碍」原始尺寸 ×2（720 宽下实测 97×54 → 194×108），
+        // 屏宽放不下就按均分收窄（高度不变）。所有"大按钮"行共用这一套尺寸。
+        int margin = 8 * dp;
         int avail = getResources().getDisplayMetrics().widthPixels - 32 * dp;   // 扣掉 root 左右 padding
-        int slot = (avail - margin * 3) / 3;
-        int wantW = Math.min(bw * 2, slot);
-        int wantH = bh * 2;
+        int slot3 = (avail - margin * 3) / 3;
+        int bw0, bh0;
+        {
+            Button probe = btn("无障碍", null);
+            probe.measure(android.view.View.MeasureSpec.makeMeasureSpec(0, android.view.View.MeasureSpec.UNSPECIFIED),
+                          android.view.View.MeasureSpec.makeMeasureSpec(0, android.view.View.MeasureSpec.UNSPECIFIED));
+            bw0 = probe.getMeasuredWidth();
+            bh0 = probe.getMeasuredHeight();
+        }
+        final int BIG_W = Math.min(bw0 * 2, slot3);
+        final int BIG_H = bh0 * 2;
         for (int i = 0; i < 3; i++) {
             pb[i].setTextSize(20);                      // 字也放大：14 -> 20sp
-            LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(wantW, wantH);
+            LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(BIG_W, BIG_H);
             p.rightMargin = margin;
             perms.addView(pb[i], p);
         }
         root.addView(perms);
+
+        // ---------------- 验证码点击速度 ----------------
+        TextView tvSpeedHint = new TextView(this);
+        tvSpeedHint.setTextSize(12);
+        tvSpeedHint.setPadding(0, 16 * dp, 0, 2 * dp);
+        tvSpeedHint.setText("点数字速度：从看到验证码弹窗，到点完第 3 个数字的总时长。"
+                + "司机自己实测平均 3.0 秒（1.5~3.5 秒）。");
+        root.addView(tvSpeedHint);
+
+        tvSpeed = new TextView(this);
+        tvSpeed.setPadding(0, 4 * dp, 0, 6 * dp);
+        root.addView(tvSpeed);
+
+        LinearLayout speedRow = new LinearLayout(this);
+        speedRow.setOrientation(LinearLayout.HORIZONTAL);
+        Button bSteady = btn("稳 3.0", new View.OnClickListener() {
+            public void onClick(View v) { pickSpeed(3000); }
+        });
+        Button bFast = btn("快 2.0", new View.OnClickListener() {
+            public void onClick(View v) { pickSpeed(2000); }
+        });
+        Button bMax = btn("极快 1.2", new View.OnClickListener() {
+            public void onClick(View v) { pickSpeed(1200); }
+        });
+        Button[] spb = new Button[]{bMax, bFast, bSteady};   // 左→右：极快 1.2 | 快 2.0 | 稳 3.0
+        for (Button tb : spb) {
+            tb.setTextSize(20);                         // 与上面三个权限按钮完全一致：20sp
+            LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(BIG_W, BIG_H);
+            p.rightMargin = margin;
+            speedRow.addView(tb, p);
+        }
+        LinearLayout.LayoutParams srp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        srp.topMargin = 4 * dp;
+        root.addView(speedRow, srp);
+
+        sbSpeed = new SeekBar(this);
+        sbSpeed.setMax(35);                             // 0.5~4.0 秒，步进 0.1
+        sbSpeed.setProgress((Cfg.budgetMs(this) - Cfg.BUDGET_MIN) / 100);
+        sbSpeed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            public void onProgressChanged(SeekBar s, int p, boolean fromUser) {
+                int ms = Cfg.BUDGET_MIN + p * 100;
+                Cfg.setBudgetMs(MainActivity.this, ms);
+                showSpeed(ms);
+            }
+            public void onStartTrackingTouch(SeekBar s) { }
+            public void onStopTrackingTouch(SeekBar s) {
+                int ms = Cfg.budgetMs(MainActivity.this);
+                Toast.makeText(MainActivity.this,
+                        "点数字速度：" + (ms / 1000.0) + " 秒（下一轮生效）", Toast.LENGTH_SHORT).show();
+            }
+        });
+        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        slp.topMargin = 4 * dp;
+        slp.bottomMargin = 4 * dp;
+        root.addView(sbSpeed, slp);
+
+        final CheckBox cbCalib = new CheckBox(this);
+        cbCalib.setText("校准模式：点完核对圆圈变绿（慢约 1 秒，装机头几次用）");
+        cbCalib.setTextSize(14);
+        cbCalib.setChecked(Cfg.calib(this));
+        cbCalib.setOnCheckedChangeListener(new android.widget.CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(android.widget.CompoundButton v, boolean c) {
+                Cfg.setCalib(MainActivity.this, c);
+            }
+        });
+        root.addView(cbCalib);
+        showSpeed(Cfg.budgetMs(this));
 
         btnRun = btn("开始抢单", new View.OnClickListener() {
             public void onClick(View v) {

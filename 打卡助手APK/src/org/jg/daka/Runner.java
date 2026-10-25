@@ -228,27 +228,41 @@ public class Runner implements Runnable {
         return handleCaptcha();
     }
 
-    /** 等验证码弹窗出现 */
+    /** 等验证码弹窗出现；看到时把那一帧和时刻留在 dlgFrame / dlgSeenAt 里给认字复用 */
     private boolean waitDialog(int ms) {
         long t0 = System.currentTimeMillis();
         while (System.currentTimeMillis() - t0 < ms) {
             if (stopFlag) return false;
             Bitmap b = shoot();
+            long tGot = System.currentTimeMillis();
             if (b != null) {
                 Vision.Shot s = new Vision.Shot(b);
                 boolean d = Vision.dialogPresent(s);
+                if (d) {
+                    dropDlgFrame();
+                    dlgFrame = b;          // 不 recycle，交给 handleCaptcha 认字
+                    dlgSeenAt = tGot;
+                    return true;
+                }
                 b.recycle();
-                if (d) return true;
             }
             sleep(250);
         }
         return false;
     }
 
-    /** 认字 + 点三格 + 等结果 */
+    /** 认字 + 按「答题总时长」预算点三格 + 等结果 */
     private String handleCaptcha() {
-        Bitmap b = shoot();
+        Bitmap b = dlgFrame;
+        long seenAt = dlgSeenAt;
+        dlgFrame = null;
+        dlgSeenAt = 0;
+        if (b == null) {
+            b = shoot();
+            seenAt = System.currentTimeMillis();
+        }
         if (b == null) return "shotfail";
+
         Vision.Shot s = new Vision.Shot(b);
         int[] ans = Vision.solve(s);
         if (ans == null) {
@@ -269,22 +283,59 @@ public class Runner implements Runnable {
         }
         b.recycle();
 
-        for (int i = 0; i < 3; i++) {
-            if (stopFlag) return "idle";
-            tapPx(cells[i][0], cells[i][1]);
-            sleep(Cfg.TAP_GAP);
-            if (i < 2) {
-                // 这里必须强制拿新画面：capture() 在 1.1 秒内会复用旧帧，
-                // 拿旧帧去判「圆圈变绿」必然误报「没变绿」。
-                Bitmap b2 = svcFresh();
-                if (b2 != null) {
-                    Vision.Shot s2 = new Vision.Shot(b2);
-                    boolean g = Vision.ringGreen(s2, i);
-                    b2.recycle();
-                    if (!g) Fx.log(app, "提醒：第 " + (i + 1) + " 个圆圈没变绿");
-                }
+        // ---- 把"总时长"排成三个绝对时刻：读题 | 第1→2 | 第2→3 ----
+        int T = Cfg.budgetMs(app);
+        int[] pl = Cfg.plan(T);
+        // 每段 ±12% 抖动，再按总额归一，避免"每次都一模一样"的机器指纹
+        pl[0] = (int) Math.round(pl[0] * (1 + (rnd.nextDouble() * 2 - 1) * 0.12));
+        pl[1] = (int) Math.round(pl[1] * (1 + (rnd.nextDouble() * 2 - 1) * 0.12));
+        pl[2] = (int) Math.round(pl[2] * (1 + (rnd.nextDouble() * 2 - 1) * 0.12));
+        int sum = pl[0] + pl[1] + pl[2];
+        int read = sum > 0 ? (int) Math.round((double) pl[0] * T / sum) : pl[0];
+        int g1 = sum > 0 ? (int) Math.round((double) pl[1] * T / sum) : pl[1];
+        int g2 = T - read - g1;
+        if (read < 150) read = 150;
+        if (g1 < 80) g1 = 80;
+        if (g2 < 80) g2 = 80;
+
+        boolean tight = false;
+        long now = System.currentTimeMillis();
+        if (now - seenAt > read) {      // 取帧/认字拖过头，预算已经不够了
+            tight = true;
+            Fx.log(app, "预算不足：识别用了 " + (now - seenAt) + "ms（目标 " + T + "ms），立即开点");
+            seenAt = now - 120;
+        }
+        long d1 = seenAt + read;
+        long d2 = d1 + g1;
+        long d3 = d2 + g2;
+
+        if (stopFlag) return "idle";
+        waitUntil(d1);
+        tapPx(cells[0][0], cells[0][1]);
+        if (stopFlag) return "idle";
+        waitUntil(d2);
+        tapPx(cells[1][0], cells[1][1]);
+
+        // 校准模式（预算之外，多花约 1.1 秒）：核对前两下有没有变绿
+        if (Cfg.calib(app)) {
+            Bitmap b2 = svcFresh();
+            if (b2 != null) {
+                Vision.Shot s2 = new Vision.Shot(b2);
+                int bad = 0;
+                for (int i = 0; i < 2; i++) if (!Vision.ringGreen(s2, i)) bad++;
+                b2.recycle();
+                Fx.log(app, bad == 0 ? "校准：前两个圆圈都变绿了" : ("校准：有 " + bad + " 个圆圈没变绿"));
             }
         }
+
+        if (stopFlag) return "idle";
+        waitUntil(d3);
+        tapPx(cells[2][0], cells[2][1]);
+
+        long done = System.currentTimeMillis();
+        Fx.log(app, "验证码 目标" + T + "ms 实际" + (done - seenAt) + "ms 读题"
+                + read + "/间隔" + g1 + "+" + g2 + (tight ? "（预算不足）" : "")
+                + (Cfg.calib(app) ? "（含校核）" : ""));
         return waitOutcome();
     }
 
@@ -381,6 +432,27 @@ public class Runner implements Runnable {
     private int a11yBadCount = 0;
     private boolean a11yModeBad = false;
     private boolean probed = false;
+
+    /** 弹窗第一次被看到的那一帧 + 看到它的时刻（答题预算从这里起算） */
+    private Bitmap dlgFrame = null;
+    private long dlgSeenAt = 0;
+
+    /** 睡到某个绝对时刻（用于把三段间隔对齐到预算） */
+    private void waitUntil(long t) {
+        long d;
+        while ((d = t - System.currentTimeMillis()) > 0) {
+            if (stopFlag) return;
+            sleep((int) Math.min(d, 50));
+        }
+    }
+
+    private void dropDlgFrame() {
+        if (dlgFrame != null) {
+            try { dlgFrame.recycle(); } catch (Throwable t) { }
+            dlgFrame = null;
+        }
+        dlgSeenAt = 0;
+    }
 
     /**
      * 抓一张当前画面。无障碍通道优先；如果它一直返回空帧（部分机型/模拟器如此），
